@@ -1,3 +1,10 @@
+#header {
+  float: left;
+  width: 20%;
+}
+.menu {
+  float: left;
+}
 .main {
   padding: 20px;
   background: white;
@@ -46,14 +53,16 @@
     color: white;
   }
   .container {
-    padding: 20px;
-    background: gray;
-    width: 900px; 
-    height: 900px;
+    position: relative;
+    float: right;
+    width: 80%; 
+    height: 100%;
+    background: rgb(201, 199, 199);
     margin: 0 auto;
   }
   .display {
-    margin: 0 300px 0 200px;
+    background: whitesmoke;
+    float: left;
   }
   .instruments {
     background: rgb(194, 185, 185);
