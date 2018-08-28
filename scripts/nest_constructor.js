@@ -25,10 +25,7 @@ function switchToStateFromURLHash() {
             break;
         case 'Constructor':
             pageHTML = "<h3>Это новый конструктор</h3>";
-            pageHTML += /*function loadPage() {
-                document.getElementById("display").innerHTML='<object type="text/html" data="page.html" ></object> '
-              }*/
-            `<div class="display">
+            pageHTML += `<div class="display">
             <canvas id="can" width="800" height="600"></canvas>
             </div>
                 <div class="instruments">
