@@ -1,5 +1,7 @@
 'use strict';
 
+let myTemplate = require('./myTemplate.hbs');
+
 window.onhashchange = switchToStateFromURLHash;
 
 function switchToStateFromURLHash() {
@@ -18,28 +20,17 @@ function switchToStateFromURLHash() {
 
     switch (SPAState.pagename) {
         case 'Main':
-            pageHTML = "<h3>Главная страница</h3>";
+            pageHTML = "<h3 class='heading'>Главная страница</h3>";
             break;
         case 'About':
-            pageHTML = "";
+            pageHTML = "<h3 class='heading'>О нас</h3>";
             break;
         case 'Constructor':
-            pageHTML = "<h3>Это новый конструктор</h3>";
-            pageHTML += `<div class="display">
-            <canvas id="can" width="800" height="600"></canvas>
-            </div>
-                <div class="instruments">
-              <button class="elem" onclick='drawRect()'>Draw rectangle</button>
-              <button class="elem" onclick='selection()'>Select</button>
-              <button class="elem" onclick='drawLine()'>Draw line</button>
-              <button class="elem" onclick='drawCircle()'>Draw circle</button>
-              <button class="elem" onclick='addText()'>Add text</button>
-              <button class="elem" id="delete">Delete selected object(s)</button>
-              <button class="elem" onclick='clearField()'>Clear</button>
-            </div>`
+            pageHTML = myTemplate();
+            
             break;
         case 'Contacts':
-            pageHTML = "";
+            pageHTML = "<h3 class='heading'>Контакты</h3>";
             break;
     }
 
