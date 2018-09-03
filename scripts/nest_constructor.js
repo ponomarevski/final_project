@@ -1,40 +1,46 @@
 'use strict';
 
-let myTemplate = require('./myTemplate.hbs');
+let flats = httpGet('http://localhost:3000/flats');
 
 window.onhashchange = switchToStateFromURLHash;
+
+let canvas = new fabric.Canvas('can', {
+    selection: false
+});
 
 function switchToStateFromURLHash() {
 
     let URLHash = window.location.hash;
-
     let hash = decodeURIComponent(URLHash.substr(1));
-
-    let pageHTML;
     let SPAState;
 
-    if (hash != "")
+    if (hash != "") {
         SPAState = JSON.parse(hash);
-    else
+    } else {
         SPAState = { pagename: 'Main' };
+    }
 
     switch (SPAState.pagename) {
         case 'Main':
-            pageHTML = "<h3 class='heading'>Главная страница</h3>";
+            addInfoToContainer('mainID');
             break;
         case 'About':
-            pageHTML = "<h3 class='heading'>О нас</h3>";
+            addInfoToContainer('aboutID');
             break;
         case 'Constructor':
-            pageHTML = myTemplate();
-            
+            addInfoToContainer('displayTemplate');
+            addFlatButton();
+            initializeCanvasVars();
             break;
         case 'Contacts':
-            pageHTML = "<h3 class='heading'>Контакты</h3>";
+            addInfoToContainer('headingID');
             break;
     }
+}
 
-    $('#Page').html(pageHTML);
+function addInfoToContainer(elementId) {
+    let source = $(`#${elementId}`).html();
+    $('#Page').html(source);
 }
 
 function switchToState(newState) {
@@ -73,11 +79,13 @@ $('#contLink').click(function () {
 
 switchToStateFromURLHash();
 
-let canvas = new fabric.Canvas('can', {
-    selection: false
-});
 
-let rect, isDown, origX, origY;
+
+let isDown, origX, origY;
+let rect,
+    line,
+    isDrawing,
+    circle;
 
 function drawRect() {
     clearCanvasEvents();
@@ -88,15 +96,7 @@ function drawRect() {
 }
 
 function selection() {
-    canvas.off('mouse:down', onMouseDown);
-    canvas.off('mouse:up', onMouseUp);
-    canvas.off('mouse:move', onMouseMove);
-    canvas.off('mouse:down', onMouseDownLine);
-    canvas.off('mouse:up', onMouseUpLine);
-    canvas.off('mouse:move', onMouseMoveLine);
-    canvas.off('mouse:down', onMouseDownCircle);
-    canvas.off('mouse:up', onMouseUpCircle);
-    canvas.off('mouse:move', onMouseMoveCircle);
+    clearCanvasEvents();
     changeSelection(true);
 }
 
@@ -110,7 +110,7 @@ function clearCanvasEvents() {
     canvas.off('mouse:down', onMouseDownCircle);
     canvas.off('mouse:up', onMouseUpCircle);
     canvas.off('mouse:move', onMouseMoveCircle);
-    
+
 }
 
 function onMouseDown(o) {
@@ -193,9 +193,6 @@ function deleteObjects() {
     }
 }
 
-let line;
-let isDrawing;
-
 function drawLine() {
     clearCanvasEvents();
     canvas.on('mouse:down', onMouseDownLine);
@@ -229,15 +226,13 @@ function onMouseUpLine(o) {
     isDrawing = false;
 };
 
-let circle;
-
 function drawCircle() {
     clearCanvasEvents();
     canvas.on('mouse:down', onMouseDownCircle);
     canvas.on('mouse:up', onMouseUpCircle);
     canvas.on('mouse:move', onMouseMoveCircle);
     changeSelection(false);
-}
+};
 
 function onMouseDownCircle(o) {
     isDown = true;
@@ -268,6 +263,130 @@ function onMouseUpCircle(o) {
     isDown = false;
 };
 
-$("#delete").click(function () {
-    deleteObjects();
-});
+
+function initializeCanvasVars() {
+    canvas = new fabric.Canvas('can', {
+        selection: false
+    });
+    $("#delete").click(function () {
+        deleteObjects();
+    });
+    
+    $("#clear").click(function () {
+        confirm('Are you sure?');
+        canvas.clear();
+    });
+    
+}
+
+function httpGet(theUrl) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", theUrl, false);
+    xmlHttp.send(null);
+    return JSON.parse(xmlHttp.responseText);
+}
+
+
+function createRect(shape) {
+    rect = new fabric.Rect({
+        left: shape.x,
+        top: shape.y,
+        originX: 'left',
+        originY: 'top',
+        width: shape.width,
+        height: shape.height,
+        angle: 0,
+        fill: 'white',
+        strokeWidth: shape.strokeWidth,
+        stroke: 'black',
+        transparentCorners: false
+    });
+    canvas.add(rect);
+};
+
+function createLine(shape) {
+    let points = [shape.x, shape.y, shape.endX, shape.endY];
+    line = new fabric.Line(points, {
+        strokeWidth: 1,
+        stroke: 'black',
+        selectable: true
+    });
+    canvas.add(line);
+};
+
+function createCircle(shape) {
+    circle = new fabric.Circle({
+        left: shape.x,
+        top: shape.y,
+        radius: shape.radius,
+        strokeWidth: 1,
+        stroke: 'black',
+        fill: 'white',
+        selectable: true,
+        originX: 'center', originY: 'center'
+    });
+    canvas.add(circle);
+};
+
+function createText(shape) {
+    let text = new fabric.IText(shape.text, {
+        fontFamily: 'Verdana',
+        left: shape.x,
+        top: shape.y,
+        fontSize: 20,
+        textAlign: 'center'
+    });
+    canvas.add(text);
+}
+
+function drawFlat() {
+    canvas.clear();
+    let flat = this;
+    flat.shapes.forEach((shape) => {
+        switch (shape.type) {
+            case 'RECTANGLE':
+                createRect(shape);
+                break;
+            case 'LINE':
+                createLine(shape);
+                break;
+            case 'CIRCLE':
+                createCircle(shape);
+                break;
+            case 'TEXT':
+                createText(shape);
+                break;
+        };
+    });
+};
+
+function addFlatButton() {
+    flats.forEach((flat) => {
+        let btn = document.createElement('button');
+        btn.innerHTML = flat.title;
+        btn.className = 'elem';
+        btn.onclick = drawFlat.bind(flat);
+        document.getElementById('costructorButtons').appendChild(btn);
+    });
+};
+
+
+function sendReview() {
+    let requestData = {};
+    requestData.first_name = $('#fname').val();
+    requestData.last_name = $('#lname').val();
+    requestData.country = $('#country').val();
+    requestData.subject = $('#subject').val();
+    let xhr = new XMLHttpRequest();
+    let url = "http://localhost:3000/reviews";
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 201) {
+            var json = JSON.parse(xhr.responseText);
+            console.log(json.first_name + ", " + json.last_name);
+        }
+    };
+    let data = JSON.stringify(requestData);
+    xhr.send(data);
+}
